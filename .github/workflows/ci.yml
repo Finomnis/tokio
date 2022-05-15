@@ -35,7 +35,7 @@ jobs:
           override: true
       # Disable cache for now as changing options screws with it
       # Todo: re-enable once on main
-      # - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v1
       - name: asan
         run: cargo test --workspace --all-features --target x86_64-unknown-linux-gnu --tests -- --test-threads 1
         env:
@@ -53,11 +53,11 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: ${{ env.rust_nightly }}
           override: true
       # Disable cache for now as changing options screws with it
       # Todo: re-enable once on main
-      # - uses: Swatinem/rust-cache@v1
+      #- uses: Swatinem/rust-cache@v1
       # - name: asan
       #   run: cargo test --workspace --all-features --target x86_64-unknown-linux-gnu --tests -- --test-threads 1
       #   env:
@@ -75,7 +75,6 @@ jobs:
         uses: actions-rs/cargo@v1
         env:
           RUSTFLAGS: "-Z sanitizer=address"
-          RUST_TEST_THREADS: "1"
         with:
           command: test
           args: --target x86_64-unknown-linux-gnu --tests --workspace --all-features -- --test-threads 1
