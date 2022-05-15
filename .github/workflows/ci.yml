@@ -13,7 +13,8 @@ env:
   rust_stable: stable
   #rust_nightly: nightly-2022-03-21 Err
   #rust_nightly: nightly-2022-04-14 Err
-  rust_nightly: nightly-2022-04-22
+  rust_nightly: nightly-2022-04-18
+  #rust_nightly: nightly-2022-04-22 Ok
   #rust_nightly: nightly-2022-04-30 Ok
   #rust_nightly: nightly-2022-05-14 Ok
   rust_clippy: 1.52.0
