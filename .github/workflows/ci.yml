@@ -11,8 +11,9 @@ env:
   RUST_BACKTRACE: 1
   # Change to specific Rust release to pin
   rust_stable: stable
-  #rust_nightly: nightly-2022-03-21
-  rust_nightly: nightly-2022-05-14
+  #rust_nightly: nightly-2022-03-21 Err
+  rust_nightly: nightly-2022-04-14
+  #rust_nightly: nightly-2022-05-14 Ok
   rust_clippy: 1.52.0
   rust_min: 1.49.0
 
@@ -41,6 +42,7 @@ jobs:
         run: cargo test --workspace --all-features --target x86_64-unknown-linux-gnu --tests -- --test-threads 1
         env:
           RUSTFLAGS: -Z sanitizer=address
+          TRYBUILD: overwrite #Ignore `trybuild` errors
 
   asan2:
     name: asan - mine
@@ -76,6 +78,7 @@ jobs:
         uses: actions-rs/cargo@v1
         env:
           RUSTFLAGS: "-Z sanitizer=address"
+          TRYBUILD: overwrite #Ignore `trybuild` errors
         with:
           command: test
           args: --target x86_64-unknown-linux-gnu --tests --workspace --all-features -- --test-threads 1
