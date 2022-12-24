@@ -98,8 +98,6 @@ type WaitList = LinkedList<Waiter, <Waiter as linked_list::Link>::Target>;
 ///         self.notify.notify_one();
 ///     }
 ///
-///     // This is a single-consumer channel, so several concurrent calls to
-///     // `recv` are not allowed.
 ///     pub async fn recv(&self) -> T {
 ///         loop {
 ///             // Drain values
