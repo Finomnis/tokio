@@ -168,6 +168,32 @@ use proc_macro::TokenStream;
 ///
 /// Note that `start_paused` requires the `test-util` feature to be enabled.
 ///
+/// ### Configure the runtime not to wait for hanging threads
+///
+/// ```rust
+/// #[tokio::main(ignore_hanging_threads = true)]
+/// async fn main() {
+///     println!("Hello world");
+/// }
+/// ```
+///
+/// Equivalent code not using `#[tokio::main]`
+///
+/// ```rust
+/// fn main() {
+///     tokio::runtime::Builder::new_multi_thread()
+///         .drop_timeout(std::time::Duration::from_nanos(0))
+///         .enable_all()
+///         .build()
+///         .unwrap()
+///         .block_on(async {
+///             println!("Hello world");
+///         })
+/// }
+/// ```
+///
+/// Note that `start_paused` requires the `test-util` feature to be enabled.
+///
 /// ### Rename package
 ///
 /// ```rust
