@@ -29,6 +29,7 @@ struct FinalConfig {
     flavor: RuntimeFlavor,
     worker_threads: Option<usize>,
     start_paused: Option<bool>,
+    ignore_hanging_threads: Option<bool>,
     crate_name: Option<String>,
 }
 
@@ -37,6 +38,7 @@ const DEFAULT_ERROR_CONFIG: FinalConfig = FinalConfig {
     flavor: RuntimeFlavor::CurrentThread,
     worker_threads: None,
     start_paused: None,
+    ignore_hanging_threads: None,
     crate_name: None,
 };
 
@@ -46,6 +48,7 @@ struct Configuration {
     flavor: Option<RuntimeFlavor>,
     worker_threads: Option<(usize, Span)>,
     start_paused: Option<(bool, Span)>,
+    ignore_hanging_threads: Option<(bool, Span)>,
     is_test: bool,
     crate_name: Option<String>,
 }
@@ -61,6 +64,7 @@ impl Configuration {
             flavor: None,
             worker_threads: None,
             start_paused: None,
+            ignore_hanging_threads: None,
             is_test,
             crate_name: None,
         }
@@ -105,6 +109,24 @@ impl Configuration {
 
         let start_paused = parse_bool(start_paused, span, "start_paused")?;
         self.start_paused = Some((start_paused, span));
+        Ok(())
+    }
+
+    fn set_ignore_hanging_threads(
+        &mut self,
+        ignore_hanging_threads: syn::Lit,
+        span: Span,
+    ) -> Result<(), syn::Error> {
+        if self.ignore_hanging_threads.is_some() {
+            return Err(syn::Error::new(
+                span,
+                "`ignore_hanging_threads` set multiple times.",
+            ));
+        }
+
+        let ignore_hanging_threads =
+            parse_bool(ignore_hanging_threads, span, "ignore_hanging_threads")?;
+        self.ignore_hanging_threads = Some((ignore_hanging_threads, span));
         Ok(())
     }
 
@@ -163,11 +185,14 @@ impl Configuration {
             (_, None) => None,
         };
 
+        let ignore_hanging_threads = self.ignore_hanging_threads.map(|(val, _)| val);
+
         Ok(FinalConfig {
             crate_name: self.crate_name.clone(),
             flavor,
             worker_threads,
             start_paused,
+            ignore_hanging_threads,
         })
     }
 }
@@ -274,6 +299,12 @@ fn build_config(
                             syn::spanned::Spanned::span(&namevalue.lit),
                         )?;
                     }
+                    "ignore_hanging_threads" => {
+                        config.set_ignore_hanging_threads(
+                            namevalue.lit.clone(),
+                            syn::spanned::Spanned::span(&namevalue.lit),
+                        )?;
+                    }
                     "core_threads" => {
                         let msg = "Attribute `core_threads` is renamed to `worker_threads`";
                         return Err(syn::Error::new_spanned(namevalue, msg));
@@ -312,7 +343,7 @@ fn build_config(
                             macro_name
                         )
                     }
-                    "flavor" | "worker_threads" | "start_paused" => {
+                    "flavor" | "worker_threads" | "start_paused" | "ignore_hanging_threads" => {
                         format!("The `{}` attribute requires an argument.", name)
                     }
                     name => {
@@ -371,6 +402,9 @@ fn parse_knobs(mut input: syn::ItemFn, is_test: bool, config: FinalConfig) -> To
     }
     if let Some(v) = config.start_paused {
         rt = quote! { #rt.start_paused(#v) };
+    }
+    if let Some(true) = config.ignore_hanging_threads {
+        rt = quote! { #rt.drop_timeout(::core::time::Duration::from_nanos(0)) };
     }
 
     let header = if is_test {
